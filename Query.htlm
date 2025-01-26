@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HCM Connects Query Generator</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        input, button { margin: 10px 0; padding: 8px; width: calc(100% - 16px); }
+        .error { color: red; }
+        .output-container { margin-top: 20px; }
+        .hidden { display: none; }
+        .info { margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <h1>HCM Connects Query Generator</h1>
+    
+    <div class="info">
+        <p>For more information about the HCM tables and views, please visit the <a href="https://docs.oracle.com/en/cloud/saas/human-resources/25a/oedmh/hcm-tables-and-views.html" target="_blank">Oracle HCM Tables and Views Documentation</a>.</p>
+    </div>
+
+    <label for="table1">Enter First Table:</label>
+    <input type="text" id="table1" placeholder="Enter Table Name" />
+    <br>
+    
+    <label for="fields1">Fields from First Table (comma-separated):</label>
+    <input type="text" id="fields1" placeholder="Enter Field1, Enter Field2, Enter Field3..." required disabled>
+    <br>
+
+    <div id="secondTableSection" class="hidden">
+        <label for="table2">Enter Second Table:</label>
+        <input type="text" id="table2" placeholder="Enter Table Name" />
+        <br>
+        
+        <label for="fields2">Fields from Second Table (comma-separated):</label>
+        <input type="text" id="fields2" placeholder="Enter Field1, Enter Field2, Enter Field3..." disabled>
+        <br>
+    </div>
+
+    <div id="thirdTableSection" class="hidden">
+        <label for="table3">Enter Third Table:</label>
+        <input type="text" id="table3" placeholder="Enter Table Name" />
+        <br>
+        
+        <label for="fields3">Fields from Third Table (comma-separated):</label>
+        <input type="text" id="fields3" placeholder="Enter Field1, Enter Field2, Enter Field3..." disabled>
+        <br>
+    </div>
+
+    <div id="fourthTableSection" class="hidden">
+        <label for="table4">Enter Fourth Table:</label>
+        <input type="text" id="table4" placeholder="Enter Table Name" />
+        <br>
+        
+        <label for="fields4">Fields from Fourth Table (comma-separated):</label>
+        <input type="text" id="fields4" placeholder="Enter Field1, Enter Field2, Enter Field3..." disabled>
+        <br>
+    </div>
+    
+    <h3>Enter Where Condition Values</h3>
+    
+    <label for="whereField1">Where Field 1:</label>
+    <input type="text" id="whereField1" placeholder="Enter where field 1" oninput="toggleWhereField2()">
+    <br>
+    
+    <label for="whereValue1">Where Value 1:</label>
+    <input type="text" id="whereValue1" placeholder="Enter where value 1" oninput="toggleWhereField2()">
+    <br>
+
+    <div id="whereField2Section" class="hidden">
+        <label for="whereField2">Where Field 2:</label>
+        <input type="text" id="whereField2" placeholder="Enter where field 2" oninput="toggleWhereField3()">
+        <br>
+        
+        <label for="whereValue2">Where Value 2:</label>
+        <input type="text" id="whereValue2" placeholder="Enter where value 2" oninput="toggleWhereField3()">
+        <br>
+    </div>
+
+    <div id="whereField3Section" class="hidden">
+        <label for="whereField3">Where Field 3:</label>
+        <input type="text" id="whereField3" placeholder="Enter where field 3">
+        <br>
+        
+        <label for="whereValue3">Where Value 3:</label>
+        <input type="text" id="whereValue3" placeholder="Enter where value 3">
+        <br>
+    </div>
+
+    <label for="orderByField">Order By Field Name:</label>
+    <input type="text" id="orderByField" placeholder="Enter field to order by">
+    <br>
+    
+    <label for="orderType">Order Type:</label>
+    <select id="orderType">
+        <option value="ASC">Ascending</option>
+        <option value="DESC">Descending</option>
+    </select>
+    <br>
+    
+    <button onclick="generateQuery()">Generate SQL Query</button>
+    <button onclick="copyToClipboard()">Copy to Clipboard</button>
+    
+    <div class="output-container">
+        <h2>Generated Query Result:</h2>
+        <pre id="output"></pre>
+        <div id="error" class="error"></div>
+    </div>
+
+    <script>
+        function enableFields(fieldId) {
+            const tableInput = document.getElementById(fieldId.replace('fields', 'table'));
+            const fieldsInput = document.getElementById(fieldId);
+            fieldsInput.disabled = tableInput.value.trim() === '';
+        }
+
+        document.getElementById('table1').addEventListener('input', function() {
+            enableFields('fields1');
+            toggleSecondTable();
+        });
+        document.getElementById('fields1').addEventListener('input', toggleSecondTable);
+        document.getElementById('table2').addEventListener('input', function() {
+            enableFields('fields2');
+            toggleThirdTable();
+        });
+        document.getElementById('fields2').addEventListener('input', toggleThirdTable);
+        document.getElementById('table3').addEventListener('input', function() {
+            enableFields('fields3');
+            toggleFourthTable();
+        });
+        document.getElementById('fields3').addEventListener('input', toggleFourthTable);
+
+        // Disable fields from the start
+        document.getElementById('fields1').disabled = true;
+        document.getElementById('fields2').disabled = true;
+        document.getElementById('fields3').disabled = true;
+
+        function toggleSecondTable() {
+            const table1 = document.getElementById('table1').value.trim();
+            const fields1 = document.getElementById('fields1');
+
+            // Enable or disable fields based on input
+            fields1.disabled = !table1;
+
+            const secondTableSection = document.getElementById('secondTableSection');
+            if (table1 && fields1.value.trim()) {
+                secondTableSection.classList.remove('hidden');
+            } else {
+                secondTableSection.classList.add('hidden');
+                document.getElementById('table2').value = '';
+                document.getElementById('fields2').value = '';
+                toggleThirdTable(); // Reset third table section
+            }
+        }
+
+        function toggleThirdTable() {
+            const table2 = document.getElementById('table2').value.trim();
+            const fields2 = document.getElementById('fields2');
+
+            fields2.disabled = !table2;
+
+            const thirdTableSection = document.getElementById('thirdTableSection');
+            if (table2 && fields2.value.trim()) {
+                thirdTableSection.classList.remove('hidden');
+            } else {
+                thirdTableSection.classList.add('hidden');
+                document.getElementById('table3').value = '';
+                document.getElementById('fields3').value = '';
+                toggleFourthTable(); // Reset fourth table section
+            }
+        }
+
+        function toggleFourthTable() {
+            const table3 = document.getElementById('table3').value.trim();
+            const fields3 = document.getElementById('fields3');
+
+            fields3.disabled = !table3;
+
+            const fourthTableSection = document.getElementById('fourthTableSection');
+            if (table3 && fields3.value.trim()) {
+                fourthTableSection.classList.remove('hidden');
+            } else {
+                fourthTableSection.classList.add('hidden');
+                document.getElementById('table4').value = '';
+                document.getElementById('fields4').value = '';
+            }
+        }
+
+        function toggleWhereField2() {
+            const whereField1 = document.getElementById('whereField1').value.trim();
+            const whereValue1 = document.getElementById('whereValue1').value.trim();
+
+            const whereField2Section = document.getElementById('whereField2Section');
+            if (whereField1 && whereValue1) {
+                whereField2Section.classList.remove('hidden');
+            } else {
+                whereField2Section.classList.add('hidden');
+                document.getElementById('whereField2').value = '';
+                document.getElementById('whereValue2').value = '';
+                toggleWhereField3(); // Reset third where field
+            }
+        }
+
+        function toggleWhereField3() {
+            const whereField2 = document.getElementById('whereField2').value.trim();
+            const whereValue2 = document.getElementById('whereValue2').value.trim();
+
+            const whereField3Section = document.getElementById('whereField3Section');
+            if (whereField2 && whereValue2) {
+                whereField3Section.classList.remove('hidden');
+            } else {
+                whereField3Section.classList.add('hidden');
+                document.getElementById('whereField3').value = '';
+                document.getElementById('whereValue3').value = '';
+            }
+        }
+
+        function generateQuery() {
+            const table1 = document.getElementById('table1').value.trim();
+            const fields1Input = document.getElementById('fields1').value.trim();
+            const table2 = document.getElementById('table2').value.trim();
+            const fields2Input = document.getElementById('fields2').value.trim();
+            const table3 = document.getElementById('table3').value.trim();
+            const fields3Input = document.getElementById('fields3').value.trim();
+            const table4 = document.getElementById('table4').value.trim();
+            const fields4Input = document.getElementById('fields4').value.trim();
+            const whereField1 = document.getElementById('whereField1').value.trim();
+            const whereValue1 = document.getElementById('whereValue1').value.trim();
+            const whereField2 = document.getElementById('whereField2').value.trim();
+            const whereValue2 = document.getElementById('whereValue2').value.trim();
+            const whereField3 = document.getElementById('whereField3').value.trim();
+            const whereValue3 = document.getElementById('whereValue3').value.trim();
+            const orderByField = document.getElementById('orderByField').value.trim();
+            const orderType = document.getElementById('orderType').value;
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = ''; // Clear previous errors
+
+            // Validate required fields for the first table
+            if (!table1 || !fields1Input) {
+                errorDiv.textContent = 'First Table and its Fields are required.';
+                return;
+            }
+
+            // Process fields from all tables
+            const fields1Array = fields1Input.split(',').map(field => field.trim()).filter(field => field);
+            const fields2Array = fields2Input ? fields2Input.split(',').map(field => field.trim()).filter(field => field) : [];
+            const fields3Array = fields3Input ? fields3Input.split(',').map(field => field.trim()).filter(field => field) : [];
+            const fields4Array = fields4Input ? fields4Input.split(',').map(field => field.trim()).filter(field => field) : [];
+            
+            // Generate SQL query with DISTINCT
+            let query = `SELECT DISTINCT ${fields1Array.join(', ')}`;
+            if (fields2Array.length > 0) {
+                query += `, ${fields2Array.join(', ')}`;
+            }
+            if (fields3Array.length > 0) {
+                query += `, ${fields3Array.join(', ')}`;
+            }
+            if (fields4Array.length > 0) {
+                query += `, ${fields4Array.join(', ')}`;
+            }
+            query += ` FROM ${table1}`;
+            if (table2) {
+                query += `, ${table2}`;
+            }
+            if (table3) {
+                query += `, ${table3}`;
+            }
+            if (table4) {
+                query += `, ${table4}`;
+            }
+
+            // Add WHERE clauses if provided
+            let whereClauses = [];
+            if (whereField1 && whereValue1) {
+                whereClauses.push(`${whereField1} = '${whereValue1}'`);
+            }
+            if (whereField2 && whereValue2) {
+                whereClauses.push(`${whereField2} = '${whereValue2}'`);
+            }
+            if (whereField3 && whereValue3) {
+                whereClauses.push(`${whereField3} = '${whereValue3}'`);
+            }
+            if (whereClauses.length > 0) {
+                query += ` WHERE ${whereClauses.join(' AND ')}`;
+            }
+
+            // Add ORDER BY clause if provided
+            if (orderByField) {
+                query += ` ORDER BY ${orderByField} ${orderType}`;
+            }
+
+            // No extra parenthesis added at the end
+            document.getElementById('output').textContent = query; // Output the generated query
+        }
+
+        function copyToClipboard() {
+            const outputText = document.getElementById('output').textContent;
+            navigator.clipboard.writeText(outputText).then(() => {
+                alert('SQL Query copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        }
+    </script>
+</body>
+</html>
