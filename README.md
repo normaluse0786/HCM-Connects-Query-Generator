@@ -1,0 +1,1 @@
+# HCM-Connects-Query-Generator
